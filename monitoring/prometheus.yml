@@ -1,0 +1,71 @@
+# =============================================================================
+# Prometheus Configuration for MySQL Monitoring
+# Cấu Hình Prometheus Cho Giám Sát MySQL
+# =============================================================================
+
+global:
+  scrape_interval:     15s      # How often to scrape / Tần suất thu thập
+  evaluation_interval: 15s      # How often to evaluate rules / Tần suất đánh giá
+  external_labels:
+    environment: 'production'   # Add to all metrics / Thêm vào mọi metric
+    cluster: 'mysql-primary'
+
+# Load alerting rules / Nạp quy tắc cảnh báo
+rule_files:
+  - "rules/mysql-alerts.yml"
+
+# Alertmanager configuration / Cấu hình Alertmanager
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - alertmanager:9093
+
+# Scrape configurations / Cấu hình thu thập
+scrape_configs:
+  # ---------------------------------------------------------------------------
+  # MySQL Primary Node / Node MySQL Chính
+  # ---------------------------------------------------------------------------
+  - job_name: 'mysql-primary'
+    static_configs:
+      - targets: ['mysql-exporter:9104']
+        labels:
+          role: 'primary'
+          instance: 'mysql-primary'
+    scrape_interval: 10s     # More frequent for primary / Thường xuyên hơn cho primary
+    metrics_path: /metrics
+
+  # ---------------------------------------------------------------------------
+  # MySQL Replica Nodes / Node Replica MySQL
+  # ---------------------------------------------------------------------------
+  - job_name: 'mysql-replicas'
+    static_configs:
+      - targets:
+          - 'mysql-replica1-exporter:9104'
+          - 'mysql-replica2-exporter:9104'
+        labels:
+          role: 'replica'
+    scrape_interval: 15s
+
+  # ---------------------------------------------------------------------------
+  # Node Exporter — OS metrics / Số liệu hệ điều hành
+  # ---------------------------------------------------------------------------
+  - job_name: 'node'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    scrape_interval: 30s
+
+  # ---------------------------------------------------------------------------
+  # ProxySQL Exporter
+  # ---------------------------------------------------------------------------
+  - job_name: 'proxysql'
+    static_configs:
+      - targets: ['proxysql:6070']
+    scrape_interval: 15s
+
+  # ---------------------------------------------------------------------------
+  # Prometheus self-monitoring / Prometheus tự giám sát
+  # ---------------------------------------------------------------------------
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']

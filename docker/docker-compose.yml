@@ -1,0 +1,99 @@
+version: "3.9"
+
+# =============================================================================
+# MySQL Full Development Stack / Stack Phát Triển Đầy Đủ
+# Includes: MySQL primary, ProxySQL, Adminer
+# =============================================================================
+
+networks:
+  mysql-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24
+
+volumes:
+  mysql-primary-data:
+  proxysql-data:
+
+services:
+  # ---------------------------------------------------------------------------
+  # MySQL Primary Node / Node MySQL Chính
+  # ---------------------------------------------------------------------------
+  mysql-primary:
+    image: mysql:8.0
+    container_name: mysql-primary
+    hostname: mysql-primary
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_DATABASE: shop_db
+      MYSQL_USER: app_user
+      MYSQL_PASSWORD: app_secret
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-primary-data:/var/lib/mysql
+      - ./mysql/my.cnf:/etc/mysql/conf.d/custom.cnf:ro
+      - ./mysql/init:/docker-entrypoint-initdb.d:ro
+    networks:
+      mysql-net:
+        ipv4_address: 172.20.0.10
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-psecret"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    command: >
+      --default-authentication-plugin=mysql_native_password
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --innodb-buffer-pool-size=512M
+      --innodb-log-file-size=128M
+      --slow-query-log=ON
+      --slow-query-log-file=/var/log/mysql/slow.log
+      --long-query-time=1
+      --log-bin=mysql-bin
+      --binlog-format=ROW
+      --server-id=1
+      --gtid-mode=ON
+      --enforce-gtid-consistency=ON
+      --binlog-expire-logs-seconds=604800
+
+  # ---------------------------------------------------------------------------
+  # ProxySQL — Query Router / Bộ Định Tuyến Truy Vấn
+  # ---------------------------------------------------------------------------
+  proxysql:
+    image: proxysql/proxysql:2.5
+    container_name: proxysql
+    restart: unless-stopped
+    ports:
+      - "6033:6033"   # MySQL protocol port
+      - "6032:6032"   # Admin interface
+    volumes:
+      - proxysql-data:/var/lib/proxysql
+    networks:
+      mysql-net:
+        ipv4_address: 172.20.0.30
+    depends_on:
+      mysql-primary:
+        condition: service_healthy
+
+  # ---------------------------------------------------------------------------
+  # Adminer — Lightweight DB GUI / Giao Diện DB Nhẹ
+  # ---------------------------------------------------------------------------
+  adminer:
+    image: adminer:4
+    container_name: adminer
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      ADMINER_DEFAULT_SERVER: mysql-primary
+    networks:
+      mysql-net:
+        ipv4_address: 172.20.0.40
+    depends_on:
+      mysql-primary:
+        condition: service_healthy

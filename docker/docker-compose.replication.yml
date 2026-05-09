@@ -1,0 +1,146 @@
+version: "3.9"
+
+# =============================================================================
+# MySQL Replication Stack / Stack Replication MySQL
+# Primary (source) + 2 Read Replicas
+# =============================================================================
+
+networks:
+  replication-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/24
+
+volumes:
+  primary-data:
+  replica1-data:
+  replica2-data:
+
+services:
+  # ---------------------------------------------------------------------------
+  # Primary / Source Node — Server ID 1
+  # ---------------------------------------------------------------------------
+  primary:
+    image: mysql:8.0
+    container_name: mysql-primary-repl
+    hostname: primary
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_DATABASE: shop_db
+      MYSQL_USER: app_user
+      MYSQL_PASSWORD: app_secret
+    ports:
+      - "3306:3306"
+    volumes:
+      - primary-data:/var/lib/mysql
+      - ./mysql/my.cnf:/etc/mysql/conf.d/custom.cnf:ro
+      - ./mysql/init:/docker-entrypoint-initdb.d:ro
+    networks:
+      replication-net:
+        ipv4_address: 172.21.0.10
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-psecret"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+    command: >
+      --server-id=1
+      --log-bin=mysql-bin
+      --binlog-format=ROW
+      --gtid-mode=ON
+      --enforce-gtid-consistency=ON
+      --binlog-expire-logs-seconds=604800
+      --max-binlog-size=100M
+      --sync-binlog=1
+      --innodb-flush-log-at-trx-commit=1
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+
+  # ---------------------------------------------------------------------------
+  # Replica 1 — Read Replica / Bản Sao Đọc 1
+  # ---------------------------------------------------------------------------
+  replica1:
+    image: mysql:8.0
+    container_name: mysql-replica1
+    hostname: replica1
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+    ports:
+      - "3307:3306"
+    volumes:
+      - replica1-data:/var/lib/mysql
+    networks:
+      replication-net:
+        ipv4_address: 172.21.0.11
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-psecret"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+    depends_on:
+      primary:
+        condition: service_healthy
+    command: >
+      --server-id=2
+      --relay-log=relay-bin
+      --log-bin=mysql-bin
+      --read-only=ON
+      --gtid-mode=ON
+      --enforce-gtid-consistency=ON
+      --slave-parallel-workers=4
+      --slave-parallel-type=LOGICAL_CLOCK
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+
+  # ---------------------------------------------------------------------------
+  # Replica 2 — Read Replica / Bản Sao Đọc 2
+  # ---------------------------------------------------------------------------
+  replica2:
+    image: mysql:8.0
+    container_name: mysql-replica2
+    hostname: replica2
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+    ports:
+      - "3308:3306"
+    volumes:
+      - replica2-data:/var/lib/mysql
+    networks:
+      replication-net:
+        ipv4_address: 172.21.0.12
+    depends_on:
+      primary:
+        condition: service_healthy
+    command: >
+      --server-id=3
+      --relay-log=relay-bin
+      --log-bin=mysql-bin
+      --read-only=ON
+      --gtid-mode=ON
+      --enforce-gtid-consistency=ON
+      --slave-parallel-workers=4
+      --slave-parallel-type=LOGICAL_CLOCK
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+
+  # ---------------------------------------------------------------------------
+  # ProxySQL — Routes writes to primary, reads to replicas
+  # Định tuyến ghi tới primary, đọc tới replica
+  # ---------------------------------------------------------------------------
+  proxysql:
+    image: proxysql/proxysql:2.5
+    container_name: proxysql-repl
+    restart: unless-stopped
+    ports:
+      - "6033:6033"
+      - "6032:6032"
+    networks:
+      replication-net:
+        ipv4_address: 172.21.0.30
+    depends_on:
+      primary:
+        condition: service_healthy

@@ -1,0 +1,93 @@
+version: 2
+
+sources:
+  - name: shop_db
+    description: "OLTP source — shop_db MySQL database / CSDL nguồn OLTP"
+    database: shop_db
+    schema: shop_db
+    tables:
+      - name: orders
+        description: "Customer orders / Đơn hàng khách hàng"
+        columns:
+          - name: id
+            tests: [unique, not_null]
+          - name: customer_id
+            tests: [not_null]
+          - name: status
+            tests:
+              - accepted_values:
+                  values: ['pending','confirmed','processing','shipped','delivered','cancelled']
+          - name: total_amount
+            tests: [not_null]
+
+      - name: customers
+        description: "Customer profiles / Hồ sơ khách hàng"
+        columns:
+          - name: id
+            tests: [unique, not_null]
+          - name: email
+            tests: [unique, not_null]
+
+      - name: order_items
+        description: "Line items per order / Mặt hàng mỗi đơn hàng"
+        columns:
+          - name: id
+            tests: [unique, not_null]
+          - name: order_id
+            tests:
+              - not_null
+              - relationships:
+                  to: source('shop_db', 'orders')
+                  field: id
+          - name: product_id
+            tests:
+              - not_null
+              - relationships:
+                  to: source('shop_db', 'products')
+                  field: id
+
+      - name: products
+        description: "Product catalog / Danh mục sản phẩm"
+        columns:
+          - name: id
+            tests: [unique, not_null]
+          - name: sku
+            tests: [unique, not_null]
+
+      - name: categories
+        description: "Product category hierarchy / Phân cấp danh mục sản phẩm"
+
+      - name: customer_addresses
+        description: "Customer delivery addresses / Địa chỉ giao hàng"
+
+models:
+  - name: stg_orders
+    description: "Cleaned orders from shop_db / Đơn hàng đã xử lý từ shop_db"
+    columns:
+      - name: order_nk
+        description: "Natural key from OLTP / Khóa tự nhiên từ OLTP"
+        tests: [unique, not_null]
+      - name: customer_nk
+        tests: [not_null]
+      - name: order_status
+        tests:
+          - accepted_values:
+              values: ['pending','confirmed','processing','shipped','delivered','cancelled']
+      - name: total_amount
+        tests: [not_null]
+
+  - name: stg_customers
+    description: "Cleaned customers with addresses / Khách hàng đã xử lý với địa chỉ"
+    columns:
+      - name: customer_nk
+        tests: [unique, not_null]
+      - name: email
+        tests: [unique, not_null]
+
+  - name: stg_products
+    description: "Products with category hierarchy and margins / Sản phẩm với phân cấp danh mục"
+    columns:
+      - name: product_nk
+        tests: [unique, not_null]
+      - name: sku
+        tests: [unique, not_null]

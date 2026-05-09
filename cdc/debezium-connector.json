@@ -1,0 +1,46 @@
+{
+  "name": "shop-db-connector",
+  "config": {
+    "connector.class": "io.debezium.connector.mysql.MySqlConnector",
+    "tasks.max": "1",
+    
+    "database.hostname": "mysql-primary",
+    "database.port": "3306",
+    "database.user": "debezium",
+    "database.password": "debezium_secret",
+    "database.server.id": "184054",
+    "topic.prefix": "shopdb",
+    
+    "database.include.list": "shop_db",
+    "table.include.list": "shop_db.customers,shop_db.orders,shop_db.order_items,shop_db.payments,shop_db.products,shop_db.inventory",
+    
+    "schema.history.internal.kafka.bootstrap.servers": "kafka:29092",
+    "schema.history.internal.kafka.topic": "shopdb.schema-history",
+    
+    "include.schema.changes": "true",
+    "snapshot.mode": "initial",
+    "snapshot.locking.mode": "minimal",
+    
+    "binlog.buffer.size": "0",
+    
+    "heartbeat.interval.ms": "5000",
+    "heartbeat.action.query": "UPDATE shopdb_heartbeat SET ts = NOW() WHERE id = 1",
+    
+    "transforms": "unwrap,addPrefix",
+    "transforms.unwrap.type": "io.debezium.transforms.ExtractNewRecordState",
+    "transforms.unwrap.drop.tombstones": "false",
+    "transforms.unwrap.delete.handling.mode": "rewrite",
+    "transforms.unwrap.add.fields": "op,table,ts_ms",
+
+    "key.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "key.converter.schemas.enable": "true",
+    "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "value.converter.schemas.enable": "true",
+    
+    "errors.retry.timeout": "300000",
+    "errors.retry.delay.max.ms": "60000",
+    "errors.tolerance": "none",
+    "errors.deadletterqueue.topic.name": "shopdb.dlq",
+    "errors.deadletterqueue.topic.replication.factor": "1"
+  }
+}

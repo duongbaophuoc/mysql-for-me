@@ -1,0 +1,75 @@
+# MySQL data files
+*.sql.gz
+*.ibd
+*.frm
+*.MYD
+*.MYI
+
+# Logs
+*.log
+mysql-slow.log
+mysql-error.log
+
+# Backup files
+*.xbstream
+*.qp
+backups/
+*.bak
+
+# Environment variables / secrets
+.env
+.env.local
+.env.*.local
+secrets/
+credentials/
+*.pem
+*.key
+*.crt
+
+# Docker volumes
+.docker/
+docker/data/
+docker/logs/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+
+# Node / dbt
+node_modules/
+dbt_packages/
+target/
+logs/
+.dbt/
+
+# Airflow
+airflow/logs/
+airflow/plugins/__pycache__/
+
+# IDE / editor
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+.AppleDouble
+.LSOverride

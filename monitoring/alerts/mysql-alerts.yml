@@ -1,0 +1,135 @@
+# =============================================================================
+# MySQL Alerting Rules for Prometheus
+# Quy Tắc Cảnh Báo MySQL Cho Prometheus
+# =============================================================================
+
+groups:
+  - name: mysql.replication
+    rules:
+      # Replication lag warning / Cảnh báo trễ sao chép
+      - alert: MySQLReplicationLagWarning
+        expr: mysql_slave_status_seconds_behind_master > 30
+        for: 2m
+        labels:
+          severity: warning
+          team: database
+        annotations:
+          summary: "MySQL replication lag high / Độ trễ sao chép MySQL cao"
+          description: |
+            Replication lag on {{ $labels.instance }} is {{ $value }}s.
+            Độ trễ sao chép trên {{ $labels.instance }} là {{ $value }}s.
+          runbook_url: "docs/stage-7-observability/05-replication-failure-recovery.md"
+
+      # Replication lag critical / Cảnh báo nghiêm trọng
+      - alert: MySQLReplicationLagCritical
+        expr: mysql_slave_status_seconds_behind_master > 120
+        for: 1m
+        labels:
+          severity: critical
+          team: database
+        annotations:
+          summary: "MySQL replication lag critical / Độ trễ sao chép nghiêm trọng"
+          description: "Replication lag: {{ $value }}s on {{ $labels.instance }}"
+
+      # Replica IO thread down / IO thread replica dừng
+      - alert: MySQLReplicaIONotRunning
+        expr: mysql_slave_status_slave_io_running != 1
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "MySQL Replica IO Thread stopped / IO Thread replica dừng"
+          description: "IO thread is not running on {{ $labels.instance }}"
+
+      # Replica SQL thread down / SQL thread replica dừng
+      - alert: MySQLReplicaSQLNotRunning
+        expr: mysql_slave_status_slave_sql_running != 1
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "MySQL Replica SQL Thread stopped / SQL Thread replica dừng"
+          description: "SQL thread is not running on {{ $labels.instance }}"
+
+  - name: mysql.performance
+    rules:
+      # High connection usage / Sử dụng kết nối cao
+      - alert: MySQLConnectionUsageHigh
+        expr: |
+          mysql_global_status_threads_connected
+          / mysql_global_variables_max_connections * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "MySQL connection usage high / Sử dụng kết nối MySQL cao"
+          description: "{{ $value | humanize }}% connections used on {{ $labels.instance }}"
+
+      # Too many connections / Quá nhiều kết nối
+      - alert: MySQLTooManyConnections
+        expr: |
+          mysql_global_status_threads_connected
+          / mysql_global_variables_max_connections * 100 > 95
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "MySQL near max connections / MySQL gần đến max kết nối"
+
+      # Low buffer pool hit rate / Tỷ lệ hit buffer pool thấp
+      - alert: MySQLBufferPoolHitRateLow
+        expr: |
+          (1 - rate(mysql_global_status_innodb_buffer_pool_reads[5m])
+          / rate(mysql_global_status_innodb_buffer_pool_read_requests[5m])) * 100 < 99
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "MySQL buffer pool hit rate low / Tỷ lệ hit buffer pool thấp"
+          description: "Hit rate: {{ $value | humanize }}% on {{ $labels.instance }}"
+
+      # QPS spike / Đột biến QPS
+      - alert: MySQLHighQPS
+        expr: rate(mysql_global_status_questions[1m]) > 5000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "MySQL high query rate / Tốc độ truy vấn MySQL cao"
+          description: "{{ $value | humanize }} QPS on {{ $labels.instance }}"
+
+      # Slow queries accumulating / Truy vấn chậm tích lũy
+      - alert: MySQLSlowQuerySpike
+        expr: rate(mysql_global_status_slow_queries[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "MySQL slow queries increasing / Truy vấn chậm đang tăng"
+
+  - name: mysql.storage
+    rules:
+      # Disk space warning / Cảnh báo dung lượng đĩa
+      - alert: MySQLDiskUsageWarning
+        expr: |
+          (node_filesystem_size_bytes{mountpoint="/var/lib/mysql"}
+          - node_filesystem_avail_bytes{mountpoint="/var/lib/mysql"})
+          / node_filesystem_size_bytes{mountpoint="/var/lib/mysql"} * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "MySQL disk usage high / Sử dụng đĩa MySQL cao"
+          description: "{{ $value | humanize }}% disk used"
+
+      # Disk space critical / Đĩa gần đầy
+      - alert: MySQLDiskUsageCritical
+        expr: |
+          (node_filesystem_size_bytes{mountpoint="/var/lib/mysql"}
+          - node_filesystem_avail_bytes{mountpoint="/var/lib/mysql"})
+          / node_filesystem_size_bytes{mountpoint="/var/lib/mysql"} * 100 > 90
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "MySQL disk critically full / Đĩa MySQL gần đầy nghiêm trọng"

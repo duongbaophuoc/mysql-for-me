@@ -1,0 +1,100 @@
+version: "3.9"
+
+# =============================================================================
+# Monitoring Stack / Stack Giám Sát
+# Prometheus + Grafana + MySQL Exporter + Node Exporter
+# =============================================================================
+
+networks:
+  monitoring-net:
+    driver: bridge
+
+volumes:
+  prometheus-data:
+  grafana-data:
+
+services:
+  # ---------------------------------------------------------------------------
+  # MySQL Exporter — Exposes MySQL metrics for Prometheus
+  # Xuất metrics MySQL cho Prometheus
+  # ---------------------------------------------------------------------------
+  mysql-exporter:
+    image: prom/mysqld-exporter:v0.15.0
+    container_name: mysql-exporter
+    restart: unless-stopped
+    environment:
+      DATA_SOURCE_NAME: "root:secret@(mysql-primary:3306)/"
+    ports:
+      - "9104:9104"
+    networks:
+      - monitoring-net
+    command:
+      - "--collect.info_schema.innodb_metrics"
+      - "--collect.info_schema.processlist"
+      - "--collect.info_schema.tables"
+      - "--collect.perf_schema.replication_group_member_stats"
+      - "--collect.slave_status"
+      - "--collect.binlog_size"
+
+  # ---------------------------------------------------------------------------
+  # Node Exporter — System-level metrics / Số liệu cấp hệ thống
+  # ---------------------------------------------------------------------------
+  node-exporter:
+    image: prom/node-exporter:v1.7.0
+    container_name: node-exporter
+    restart: unless-stopped
+    ports:
+      - "9100:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    networks:
+      - monitoring-net
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+
+  # ---------------------------------------------------------------------------
+  # Prometheus — Metrics collection / Thu thập số liệu
+  # ---------------------------------------------------------------------------
+  prometheus:
+    image: prom/prometheus:v2.49.0
+    container_name: prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ../monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ../monitoring/alerts/mysql-alerts.yml:/etc/prometheus/rules/mysql-alerts.yml:ro
+      - prometheus-data:/prometheus
+    networks:
+      - monitoring-net
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.enable-lifecycle'
+
+  # ---------------------------------------------------------------------------
+  # Grafana — Dashboards / Bảng điều khiển
+  # ---------------------------------------------------------------------------
+  grafana:
+    image: grafana/grafana:10.2.0
+    container_name: grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin123
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/mysql-overview.json
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ../monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    networks:
+      - monitoring-net
+    depends_on:
+      - prometheus

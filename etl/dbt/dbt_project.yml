@@ -1,0 +1,53 @@
+name: mysql_roadmap
+version: "1.0"
+config-version: 2
+
+profile: dev
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+# Model configurations / Cấu hình model
+models:
+  mysql_roadmap:
+    # Staging layer — raw source data / Tầng staging — dữ liệu nguồn thô
+    staging:
+      +materialized: view          # Views for freshness / View để luôn mới
+      +tags: ["staging"]
+      
+    # Intermediate layer — business logic / Tầng trung gian — logic nghiệp vụ
+    intermediate:
+      +materialized: ephemeral    # In-query CTEs
+      +tags: ["intermediate"]
+      
+    # Mart layer — analytics-ready / Tầng mart — sẵn sàng phân tích
+    marts:
+      +materialized: table        # Physical tables
+      +tags: ["mart"]
+      sales:
+        +materialized: incremental
+        +unique_key: sale_sk
+        +on_schema_change: fail
+
+
+# Profiles for different environments / Profile cho các môi trường khác nhau
+# Create ~/.dbt/profiles.yml with: / Tạo ~/.dbt/profiles.yml với:
+# mysql_roadmap:
+#   target: dev
+#   outputs:
+#     dev:
+#       type: mysql
+#       server: 127.0.0.1
+#       port: 3306
+#       schema: analytics_dw
+#       username: root
+#       password: secret

@@ -1,0 +1,130 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysql
+  namespace: database
+  labels:
+    app: mysql
+    component: primary
+spec:
+  serviceName: mysql
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+      component: primary
+  template:
+    metadata:
+      labels:
+        app: mysql
+        component: primary
+    spec:
+      initContainers:
+        # Copy custom config before MySQL starts
+        # Sao chép cấu hình tùy chỉnh trước khi MySQL khởi động
+        - name: init-config
+          image: busybox:1.36
+          command: ['sh', '-c', 'cp /config/my.cnf /etc/mysql/conf.d/']
+          volumeMounts:
+            - name: config-volume
+              mountPath: /config
+            - name: mysql-conf
+              mountPath: /etc/mysql/conf.d
+
+      containers:
+        - name: mysql
+          image: mysql:8.0
+          ports:
+            - name: mysql
+              containerPort: 3306
+              protocol: TCP
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: root-password
+            - name: MYSQL_DATABASE
+              value: "shop_db"
+            - name: MYSQL_USER
+              value: "app_user"
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: app-password
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "500m"
+            limits:
+              memory: "4Gi"
+              cpu: "2000m"
+          volumeMounts:
+            - name: mysql-data
+              mountPath: /var/lib/mysql
+            - name: mysql-conf
+              mountPath: /etc/mysql/conf.d
+          livenessProbe:
+            exec:
+              command:
+                - bash
+                - -c
+                - "mysqladmin ping -u root -p$MYSQL_ROOT_PASSWORD"
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+          readinessProbe:
+            exec:
+              command:
+                - bash
+                - -c
+                - "mysql -u root -p$MYSQL_ROOT_PASSWORD -e 'SELECT 1'"
+            initialDelaySeconds: 10
+            periodSeconds: 5
+
+      volumes:
+        - name: config-volume
+          configMap:
+            name: mysql-config
+        - name: mysql-conf
+          emptyDir: {}
+
+  volumeClaimTemplates:
+    - metadata:
+        name: mysql-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: "fast-ssd"    # Adjust for your cloud / Điều chỉnh cho cloud của bạn
+        resources:
+          requests:
+            storage: 500Gi
+
+---
+# Service for MySQL primary / Service cho MySQL primary
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+  namespace: database
+spec:
+  selector:
+    app: mysql
+    component: primary
+  ports:
+    - name: mysql
+      port: 3306
+      targetPort: 3306
+  clusterIP: None    # Headless service for StatefulSet / Headless service cho StatefulSet
+
+---
+# Secret for credentials / Secret cho thông tin xác thực
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mysql-secret
+  namespace: database
+type: Opaque
+stringData:
+  root-password: "CHANGE_ME_IN_PRODUCTION"
+  app-password: "CHANGE_ME_IN_PRODUCTION"

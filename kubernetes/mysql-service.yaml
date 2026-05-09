@@ -1,0 +1,57 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-primary
+  namespace: default
+  labels:
+    app: mysql
+    role: primary
+spec:
+  selector:
+    app: mysql
+    role: primary
+  ports:
+    - name: mysql
+      protocol: TCP
+      port: 3306
+      targetPort: 3306
+  # ClusterIP — internal only / Chỉ nội bộ
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-read
+  namespace: default
+  labels:
+    app: mysql
+    role: replica
+spec:
+  selector:
+    app: mysql
+    role: replica
+  ports:
+    - name: mysql
+      protocol: TCP
+      port: 3306
+      targetPort: 3306
+  type: ClusterIP
+
+---
+# ─── Headless service for StatefulSet DNS / Dịch vụ headless cho DNS StatefulSet ──
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-headless
+  namespace: default
+  labels:
+    app: mysql
+spec:
+  selector:
+    app: mysql
+  clusterIP: None   # headless / không đầu
+  ports:
+    - name: mysql
+      port: 3306
+      targetPort: 3306
