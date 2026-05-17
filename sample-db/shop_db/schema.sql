@@ -166,8 +166,7 @@ CREATE TABLE order_items (
     unit_price      DECIMAL(12,2)   NOT NULL,
     quantity        INT UNSIGNED    NOT NULL,
     discount        DECIMAL(12,2)   NOT NULL DEFAULT 0.00,
-    line_total      DECIMAL(14,2)   NOT NULL
-                    GENERATED ALWAYS AS (unit_price * quantity - discount) STORED,
+    line_total      DECIMAL(14,2)   GENERATED ALWAYS AS (unit_price * quantity - discount) STORED NOT NULL,
     created_at      DATETIME(3)     NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     PRIMARY KEY (id),
     KEY idx_order_items_order_id   (order_id),
