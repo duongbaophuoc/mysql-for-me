@@ -48,7 +48,7 @@ log "✅ Replication user created / User replication đã tạo: $REPL_USER"
 # Step 3: Get primary GTID information
 # Bước 3: Lấy thông tin GTID primary
 log "[3/6] Getting primary GTID / Lấy GTID primary..."
-
+EXECUTED_GTIDS=$($PRIMARY_CMD -se "SELECT @@GLOBAL.gtid_executed")
 log "Primary executed GTIDs / GTID đã thực thi: ${EXECUTED_GTIDS:0:50}..."
 
 # Step 4: Configure replica to use GTID auto-positioning
