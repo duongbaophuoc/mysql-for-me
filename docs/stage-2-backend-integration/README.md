@@ -17,7 +17,7 @@ _Hầu hết backend engineer tương tác với MySQL qua ORM. Giai đoạn nà
 | [02-n-plus-1-problem.md](02-n-plus-1-problem.md) | Query explosion detection & fix | Intermediate |
 | [03-connection-pooling.md](03-connection-pooling.md) | HikariCP, DBCP2, pgBouncer patterns | Intermediate |
 | [04-pagination-strategies.md](04-pagination-strategies.md) | Offset vs Keyset cursor pagination | Intermediate |
-| [05-cqrs-patterns.md](05-cqrs-patterns.md) | Command-Query Responsibility Segregation | Advanced |
+| [05-cqrs-read-write-patterns.md](05-cqrs-read-write-patterns.md) | Command-Query Responsibility Segregation | Advanced |
 | [06-idempotency.md](06-idempotency.md) | Idempotency keys for distributed systems | Advanced |
 | [07-distributed-transactions-saga.md](07-distributed-transactions-saga.md) | Saga pattern, 2PC, compensation | Advanced |
 
