@@ -6,7 +6,7 @@ _Từ Nền Tảng SQL → Nền Tảng Dữ Liệu Phân Tán → Hạ Tầng C
 
 [![CI](https://github.com/duongbaophuoc/mysql-for-me/actions/workflows/ci.yml/badge.svg)](https://github.com/duongbaophuoc/mysql-for-me/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE.md)
-[![MySQL](https://img.shields.io/badge/MySQL-8.0-blue?logo=mysql&logoColor=white)](https://dev.mysql.com/doc/refman/8.0/en/)
+[![MySQL](https://img.shields.io/badge/MySQL-8.0-blue?logo=mysql&logoColor=white)](https://docs.oracle.com/cd/E17952_01/mysql-8.0-en/)
 [![Stages](https://img.shields.io/badge/Stages-8-green)](docs/)
 [![Labs](https://img.shields.io/badge/Labs-8-orange)](labs/)
 [![Diagrams](https://img.shields.io/badge/Diagrams-6-purple)](diagrams/)
