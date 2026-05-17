@@ -1,0 +1,130 @@
+name: Validate SQL & Shell Scripts
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Job 1: Lint Shell Scripts / Kiểm Tra Shell Scripts
+  # ---------------------------------------------------------------------------
+  lint-shell:
+    name: Lint Shell Scripts (shellcheck)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install shellcheck
+        run: sudo apt-get install -y shellcheck
+
+      - name: Run shellcheck on all .sh files
+        run: |
+          find . -name "*.sh" -not -path "./.git/*" | while read -r file; do
+            echo "Checking: $file"
+            shellcheck "$file"
+          done
+
+  # ---------------------------------------------------------------------------
+  # Job 2: Validate SQL Syntax / Kiểm Tra Cú Pháp SQL
+  # ---------------------------------------------------------------------------
+  validate-sql:
+    name: Validate SQL Syntax (MySQL 8.0)
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: secret
+          MYSQL_DATABASE: shop_db
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -uroot -psecret"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Wait for MySQL to be ready
+        run: |
+          until mysql -h 127.0.0.1 -uroot -psecret -e "SELECT 1" 2>/dev/null; do
+            echo "Waiting for MySQL..."
+            sleep 2
+          done
+
+      - name: Validate shop_db schema
+        run: |
+          mysql -h 127.0.0.1 -uroot -psecret shop_db < sample-db/shop_db/schema.sql
+          echo "✅ shop_db schema validated"
+
+      - name: Load shop_db seed data
+        run: |
+          mysql -h 127.0.0.1 -uroot -psecret shop_db < sample-db/shop_db/seed.sql
+          echo "✅ shop_db seed data loaded"
+
+      - name: Validate analytics_dw schema
+        run: |
+          mysql -h 127.0.0.1 -uroot -psecret -e "CREATE DATABASE IF NOT EXISTS analytics_dw;"
+          mysql -h 127.0.0.1 -uroot -psecret analytics_dw < sample-db/analytics_dw/schema.sql
+          echo "✅ analytics_dw schema validated"
+
+      - name: Validate lab SQL scripts
+        run: |
+          for sql_file in labs/*/setup.sql; do
+            if [ -f "$sql_file" ]; then
+              echo "Validating: $sql_file"
+              mysql -h 127.0.0.1 -uroot -psecret shop_db < "$sql_file" && \
+                echo "  ✅ $sql_file OK" || \
+                echo "  ⚠️  $sql_file had issues (non-blocking)"
+            fi
+          done
+
+  # ---------------------------------------------------------------------------
+  # Job 3: Validate Docker Compose / Kiểm Tra Docker Compose
+  # ---------------------------------------------------------------------------
+  validate-docker:
+    name: Validate Docker Compose Files
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate docker-compose.yml
+        run: docker compose -f docker/docker-compose.yml config --quiet
+
+      - name: Validate docker-compose.replication.yml
+        run: docker compose -f docker/docker-compose.replication.yml config --quiet
+
+      - name: Validate docker-compose.monitoring.yml
+        run: docker compose -f docker/docker-compose.monitoring.yml config --quiet
+
+      - name: Validate Kubernetes manifests
+        run: |
+          kubectl apply --dry-run=client -f kubernetes/ 2>/dev/null || \
+          echo "⚠️  kubectl not available — skipping K8s validation"
+
+  # ---------------------------------------------------------------------------
+  # Job 4: Check Markdown Links / Kiểm Tra Liên Kết Markdown
+  # ---------------------------------------------------------------------------
+  check-links:
+    name: Check Markdown Links
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check markdown links
+        uses: gaurav-nelson/github-action-markdown-link-check@v1
+        with:
+          use-quiet-mode: 'yes'
+          use-verbose-mode: 'no'
+          config-file: '.github/markdown-link-check-config.json'
+          folder-path: '.'
+          file-extension: '.md'

@@ -1,8 +1,15 @@
 # 🐬 MySQL Infrastructure & Database Engineering Roadmap
-# 🐬 Lộ Trình Kỹ Thuật Hạ Tầng MySQL & Cơ Sở Dữ Liệu
+### Lộ Trình Kỹ Thuật Hạ Tầng MySQL & Cơ Sở Dữ Liệu
 
-### From SQL Fundamentals → Distributed Data Platforms → Production Database Infrastructure
-### Từ Nền Tảng SQL → Nền Tảng Dữ Liệu Phân Tán → Hạ Tầng Cơ Sở Dữ Liệu Production
+**From SQL Fundamentals → Distributed Data Platforms → Production Database Infrastructure**  
+_Từ Nền Tảng SQL → Nền Tảng Dữ Liệu Phân Tán → Hạ Tầng Cơ Sở Dữ Liệu Production_
+
+[![CI](https://github.com/duongbaophuoc/mysql-for-me/actions/workflows/ci.yml/badge.svg)](https://github.com/duongbaophuoc/mysql-for-me/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE.md)
+[![MySQL](https://img.shields.io/badge/MySQL-8.0-blue?logo=mysql&logoColor=white)](https://dev.mysql.com/doc/refman/8.0/en/)
+[![Stages](https://img.shields.io/badge/Stages-8-green)](docs/)
+[![Labs](https://img.shields.io/badge/Labs-8-orange)](labs/)
+[![Diagrams](https://img.shields.io/badge/Diagrams-6-purple)](diagrams/)
 
 > **This is not a CRUD tutorial. This roadmap teaches how MySQL is used in real production systems.**
 >
@@ -260,6 +267,22 @@ _Kỹ thuật cơ sở dữ liệu thực tế đòi hỏi hiểu rõ:_
 
 ---
 
+## 🗓️ Architecture Diagrams / Sơ Đồ Kiến Trúc
+
+_All diagrams are written in [Mermaid](https://mermaid.js.org/) and render natively on GitHub._  
+_Tất cả sơ đồ được viết bằng Mermaid và hiển thị trực tiếp trên GitHub._
+
+| Diagram / Sơ Đồ | Description / Mô Tả |
+| --- | --- |
+| [🌐 System Architecture](diagrams/mysql-architecture-overview.md) | Full production topology with ProxySQL, replicas, CDC, monitoring |
+| [🧠 InnoDB Internals](diagrams/innodb-internals.md) | Buffer pool, redo/undo log, B+ tree, MVCC layout |
+| [🔄 Replication Topology](diagrams/replication-topology.md) | GTID replication, InnoDB Cluster, failover sequence |
+| [🌐 Distributed Architecture](diagrams/distributed-architecture.md) | Vitess sharding, ProxySQL read/write split, CAP trade-offs |
+| [🔄 ETL / CDC Pipeline](diagrams/etl-pipeline.md) | Debezium + Kafka, Airflow DAG, Outbox Pattern |
+| [📊 Monitoring Stack](diagrams/monitoring-stack.md) | Prometheus + Grafana + Alertmanager flow |
+
+---
+
 ## 📁 Repository Structure / Cấu Trúc Repository
 
 ```text
@@ -371,12 +394,17 @@ _Sau khi hoàn thành lộ trình này, bạn sẽ có thể:_
 
 ## 🤝 Contributing / Đóng Góp
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.  
 _Xem [CONTRIBUTING.md](CONTRIBUTING.md) để biết hướng dẫn đóng góp._
+
+See [CHANGELOG.md](CHANGELOG.md) for version history.  
+_Xem [CHANGELOG.md](CHANGELOG.md) để xem lịch sử phiên bản._
 
 ---
 
 <div align="center">
   <strong>Built for production engineers. Not for beginners who just want CRUD.</strong><br>
-  <em>Được xây dựng cho các kỹ sư production. Không phải cho người mới chỉ muốn làm CRUD.</em>
+  <em>Được xây dựng cho các kỹ sư production. Không phải cho người mới chỉ muốn làm CRUD.</em><br><br>
+  <a href="https://github.com/duongbaophuoc/mysql-for-me/actions"><img src="https://github.com/duongbaophuoc/mysql-for-me/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="LICENSE.md"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="MIT License"></a>
 </div>

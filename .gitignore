@@ -66,6 +66,9 @@ tmp/
 temp/
 *.tmp
 
+# Draft / source text files (not for repo)
+*.txt
+
 # Jupyter
 .ipynb_checkpoints/
 
