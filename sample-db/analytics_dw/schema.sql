@@ -151,7 +151,7 @@ CREATE TABLE fact_sales (
     order_source        VARCHAR(50)     NOT NULL,
     -- ETL tracking
     dw_inserted_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (sale_sk),
+    PRIMARY KEY (sale_sk,date_key),
     KEY idx_fact_sales_date_key         (date_key),
     KEY idx_fact_sales_customer_sk      (customer_sk),
     KEY idx_fact_sales_product_sk       (product_sk),
