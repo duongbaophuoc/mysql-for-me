@@ -18,9 +18,6 @@ MYSQL_PASSWORD="${MYSQL_PASSWORD:-secret}"
 
 CON_FLAG="${1:-}"
 
-MYSQL_PRIMARY="mysql -h $PRIMARY_HOST -P $PRIMARY_PORT -u $MYSQL_USER -p$MYSQL_PASSWORD"
-MYSQL_REPLICA="mysql -h $REPLICA_HOST -P $REPLICA_PORT -u $MYSQL_USER -p$MYSQL_PASSWORD"
-
 print_header() {
     echo "============================================================"
     echo " MySQL Replication Lag Monitor / Giám Sát Độ Trễ Sao Chép"
@@ -31,12 +28,12 @@ print_header() {
 check_lag() {
     echo ""
     echo "─── Primary GTID Position / Vị Trí GTID Primary ───"
-    $MYSQL_PRIMARY -se "SELECT @@global.gtid_executed" 2>/dev/null | head -c 200
+    mysql -h "$PRIMARY_HOST" -P "$PRIMARY_PORT" -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" -se "SELECT @@global.gtid_executed" 2>/dev/null | head -c 200
     echo ""
 
     echo ""
     echo "─── Replica Status / Trạng Thái Replica ───"
-    $MYSQL_REPLICA -e "
+    mysql -h "$REPLICA_HOST" -P "$REPLICA_PORT" -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" -e "
     SELECT
         Replica_IO_Running         AS io_running,
         Replica_SQL_Running        AS sql_running,
@@ -47,12 +44,12 @@ check_lag() {
     FROM performance_schema.replication_connection_status
     JOIN performance_schema.replication_applier_status USING (CHANNEL_NAME)
     " 2>/dev/null || \
-    $MYSQL_REPLICA -e "SHOW REPLICA STATUS\G" 2>/dev/null | grep -E \
+    mysql -h "$REPLICA_HOST" -P "$REPLICA_PORT" -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" -e "SHOW REPLICA STATUS\G" 2>/dev/null | grep -E \
         "Replica_IO_Running|Replica_SQL_Running|Seconds_Behind|Last_Error|Last_IO_Error|Last_SQL"
 
     echo ""
     echo "─── Parallel Workers / Worker Song Song ───"
-    $MYSQL_REPLICA -se "SELECT @@replica_parallel_workers, @@replica_parallel_type" | \
+    mysql -h "$REPLICA_HOST" -P "$REPLICA_PORT" -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" -se "SELECT @@replica_parallel_workers, @@replica_parallel_type" | \
         awk '{printf "  Workers: %s   Type: %s\n", $1, $2}'
 }
 
@@ -66,9 +63,9 @@ if [[ "$CON_FLAG" == "--continuous" ]]; then
         sleep 2
         echo ""
         echo "─── $(date '+%H:%M:%S') ───"
-        $MYSQL_REPLICA -se "
+        mysql -h "$REPLICA_HOST" -P "$REPLICA_PORT" -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" -se "
             SELECT IFNULL(Seconds_Behind_Source, 'NULL (IO not running)') AS lag_seconds
             FROM performance_schema.replication_connection_status" 2>/dev/null || \
-        $MYSQL_REPLICA -se "SHOW REPLICA STATUS" 2>/dev/null | awk '{print "Lag:", $NF, "sec"}'
+        mysql -h "$REPLICA_HOST" -P "$REPLICA_PORT" -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" -se "SHOW REPLICA STATUS" 2>/dev/null | awk '{print "Lag:", $NF, "sec"}'
     done
 fi
