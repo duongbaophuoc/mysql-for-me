@@ -15,8 +15,8 @@ ROOT_PASSWORD="${ROOT_PASSWORD:-secret}"
 REPL_USER="${REPL_USER:-replicator}"
 REPL_PASSWORD="${REPL_PASSWORD:-repl_secret}"
 
-PRIMARY_CMD="mysql -h \"$PRIMARY_HOST\" -P \"$PRIMARY_PORT\" -u root -p\"$ROOT_PASSWORD\""
-REPLICA_CMD="mysql -h \"$REPLICA_HOST\" -P \"$REPLICA_PORT\" -u root -p\"$ROOT_PASSWORD\""
+PRIMARY_CMD=(mysql -h "$PRIMARY_HOST" -P "$PRIMARY_PORT" -u root -p"$ROOT_PASSWORD")
+REPLICA_CMD=(mysql -h "$REPLICA_HOST" -P "$REPLICA_PORT" -u root -p"$ROOT_PASSWORD")
 
 log()  { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*"; }
 err()  { echo "[$(date '+%Y-%m-%d %H:%M:%S')] ❌ ERROR: $*" >&2; exit 1; }
@@ -28,7 +28,7 @@ log "Replica: $REPLICA_HOST:$REPLICA_PORT"
 # Step 1: Verify GTID is enabled on primary
 # Bước 1: Xác minh GTID được bật trên primary
 log "[1/6] Checking GTID mode on primary / Kiểm tra chế độ GTID trên primary..."
-GTID_MODE=$($PRIMARY_CMD -se "SELECT @@gtid_mode")
+GTID_MODE=$("${PRIMARY_CMD[@]}" -se "SELECT @@gtid_mode")
 if [ "$GTID_MODE" != "ON" ]; then
     err "GTID mode is not ON on primary. Set gtid_mode=ON in my.cnf and restart."
 fi
@@ -37,7 +37,7 @@ log "✅ GTID mode: $GTID_MODE"
 # Step 2: Create replication user on primary
 # Bước 2: Tạo user replication trên primary
 log "[2/6] Creating replication user / Tạo user replication..."
-$PRIMARY_CMD -e "
+"${PRIMARY_CMD[@]}" -e "
 CREATE USER IF NOT EXISTS '$REPL_USER'@'%'
     IDENTIFIED WITH mysql_native_password BY '$REPL_PASSWORD';
 GRANT REPLICATION SLAVE ON *.* TO '$REPL_USER'@'%';
@@ -48,14 +48,14 @@ log "✅ Replication user created / User replication đã tạo: $REPL_USER"
 # Step 3: Get primary GTID information
 # Bước 3: Lấy thông tin GTID primary
 log "[3/6] Getting primary GTID / Lấy GTID primary..."
-$PRIMARY_CMD -e "SHOW MASTER STATUS\\G"
-EXECUTED_GTIDS=$($PRIMARY_CMD -se "SELECT @@GLOBAL.gtid_executed")
+"${PRIMARY_CMD[@]}" -e "SHOW MASTER STATUS\\G"
+EXECUTED_GTIDS=$("${PRIMARY_CMD[@]}" -se "SELECT @@GLOBAL.gtid_executed")
 log "Primary executed GTIDs / GTID đã thực thi: ${EXECUTED_GTIDS:0:50}..."
 
 # Step 4: Configure replica to use GTID auto-positioning
 # Bước 4: Cấu hình replica dùng GTID tự động định vị
 log "[4/6] Configuring replica / Cấu hình replica..."
-$REPLICA_CMD -e "
+"${REPLICA_CMD[@]}" -e "
 STOP REPLICA;
 RESET REPLICA ALL;
 CHANGE REPLICATION SOURCE TO
