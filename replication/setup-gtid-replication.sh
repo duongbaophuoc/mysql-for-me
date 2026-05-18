@@ -74,11 +74,8 @@ log "✅ Replica configured / Replica đã cấu hình"
 log "[5/6] Starting replica / Khởi động replica..."
 $REPLICA_CMD -e "START REPLICA;"
 sleep 5
-# shellcheck disable=SC2086
-IO_RUNNING=$(set +o pipefail; $REPLICA_CMD -se "SHOW REPLICA STATUS\\G" | grep "Replica_IO_Running:" | awk '{print $2}' || echo "UNKNOWN")
-
-# shellcheck disable=SC2086
-SQL_RUNNING=$(set +o pipefail; $REPLICA_CMD -se "SHOW REPLICA STATUS\\G" | grep "Replica_SQL_Running:" | awk '{print $2}' || echo "UNKNOWN")
+IO_RUNNING=$($REPLICA_CMD -se "SHOW REPLICA STATUS\G" | grep "Replica_IO_Running:" | awk '{print $2}' || echo "UNKNOWN")
+SQL_RUNNING=$($REPLICA_CMD -se "SHOW REPLICA STATUS\G" | grep "Replica_SQL_Running:" | awk '{print $2}' || echo "UNKNOWN")
 
 if [ "$IO_RUNNING" = "Yes" ] && [ "$SQL_RUNNING" = "Yes" ]; then
     log "✅ Replication started successfully / Replication khởi động thành công"
