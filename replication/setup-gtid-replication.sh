@@ -72,21 +72,21 @@ log "✅ Replica configured / Replica đã cấu hình"
 # Step 5: Start replica and verify
 # Bước 5: Khởi động replica và xác minh
 log "[5/6] Starting replica / Khởi động replica..."
-$REPLICA_CMD -e "START REPLICA;"
+"${REPLICA_CMD[@]}" -e "START REPLICA;"
 sleep 5
-IO_RUNNING=$($REPLICA_CMD -se "SHOW REPLICA STATUS\\G" | grep "Replica_IO_Running:" | awk '{print $2}' || echo "UNKNOWN")
-SQL_RUNNING=$($REPLICA_CMD -se "SHOW REPLICA STATUS\\G" | grep "Replica_SQL_Running:" | awk '{print $2}' || echo "UNKNOWN")
+IO_RUNNING=$("${REPLICA_CMD[@]}" -se "SHOW REPLICA STATUS\\G" | grep "Replica_IO_Running:" | awk '{print $2}' || echo "UNKNOWN")
+SQL_RUNNING=$("${REPLICA_CMD[@]}" -se "SHOW REPLICA STATUS\\G" | grep "Replica_SQL_Running:" | awk '{print $2}' || echo "UNKNOWN")
 
 if [ "$IO_RUNNING" = "Yes" ] && [ "$SQL_RUNNING" = "Yes" ]; then
     log "✅ Replication started successfully / Replication khởi động thành công"
 else
-    LAST_ERROR=$($REPLICA_CMD -e "SHOW REPLICA STATUS\\G" | grep "Last_Error:" | head -1)
+    LAST_ERROR=$("${REPLICA_CMD[@]}" -e "SHOW REPLICA STATUS\\G" | grep "Last_Error:" | head -1)
     err "Replication failed to start / Replication khởi động thất bại: $LAST_ERROR"
 fi
 
 # Step 6: Show final status / Bước 6: Hiển thị trạng thái cuối
 log "[6/6] Final status / Trạng thái cuối:"
-$REPLICA_CMD -e "
+"${REPLICA_CMD[@]}" -e "
 SELECT 
     CHANNEL_NAME             AS channel,
     SERVICE_STATE            AS state,
