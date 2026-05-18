@@ -31,7 +31,7 @@ fi
 
 # Find the most recent backup (full or last incremental) to use as base
 # Tìm backup gần nhất (full hoặc incremental cuối) để làm base
-LAST_BACKUP=$(ls -dt "$BACKUP_BASE_DIR/incr_${TODAY}"_* 2>/dev/null | head -1 || echo "$FULL_BACKUP_DIR")
+LAST_BACKUP=$(ls -dt "$BACKUP_BASE_DIR"/incr_"${TODAY}"_* 2>/dev/null | head -1 || echo "$FULL_BACKUP_DIR")
 if [[ -z "$LAST_BACKUP" ]]; then
     LAST_BACKUP="$FULL_BACKUP_DIR"
 fi

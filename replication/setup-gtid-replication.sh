@@ -46,9 +46,9 @@ FLUSH PRIVILEGES;
 log "✅ Replication user created / User replication đã tạo: $REPL_USER"
 
 # Step 3: Get primary GTID information
-# Bước 3: Lấy th��ng tin GTID primary
+# Bước 3: Lấy thông tin GTID primary
 log "[3/6] Getting primary GTID / Lấy GTID primary..."
-$PRIMARY_CMD -e "SHOW MASTER STATUS\G"
+$PRIMARY_CMD -e "SHOW MASTER STATUS\\G"
 EXECUTED_GTIDS=$($PRIMARY_CMD -se "SELECT @@GLOBAL.gtid_executed")
 log "Primary executed GTIDs / GTID đã thực thi: ${EXECUTED_GTIDS:0:50}..."
 
@@ -74,13 +74,13 @@ log "✅ Replica configured / Replica đã cấu hình"
 log "[5/6] Starting replica / Khởi động replica..."
 $REPLICA_CMD -e "START REPLICA;"
 sleep 5
-IO_RUNNING=$($REPLICA_CMD -se "SHOW REPLICA STATUS\G" | grep "Replica_IO_Running:" | awk '{print $2}' || echo "UNKNOWN")
-SQL_RUNNING=$($REPLICA_CMD -se "SHOW REPLICA STATUS\G" | grep "Replica_SQL_Running:" | awk '{print $2}' || echo "UNKNOWN")
+IO_RUNNING=$($REPLICA_CMD -se "SHOW REPLICA STATUS\\G" | grep "Replica_IO_Running:" | awk '{print $2}' || echo "UNKNOWN")
+SQL_RUNNING=$($REPLICA_CMD -se "SHOW REPLICA STATUS\\G" | grep "Replica_SQL_Running:" | awk '{print $2}' || echo "UNKNOWN")
 
 if [ "$IO_RUNNING" = "Yes" ] && [ "$SQL_RUNNING" = "Yes" ]; then
     log "✅ Replication started successfully / Replication khởi động thành công"
 else
-    LAST_ERROR=$($REPLICA_CMD -e "SHOW REPLICA STATUS\G" | grep "Last_Error:" | head -1)
+    LAST_ERROR=$($REPLICA_CMD -e "SHOW REPLICA STATUS\\G" | grep "Last_Error:" | head -1)
     err "Replication failed to start / Replication khởi động thất bại: $LAST_ERROR"
 fi
 
@@ -91,10 +91,10 @@ SELECT
     CHANNEL_NAME             AS channel,
     SERVICE_STATE            AS state,
     COUNT_TRANSACTIONS_BEHIND_SOURCE AS lag_txns
-FROM performance_schema.replication_applier_status\G
+FROM performance_schema.replication_applier_status\\G
 "
 
 log ""
 log "=== GTID Replication Setup Complete / Thiết Lập GTID Replication Hoàn Tất ==="
 log "Monitor with / Giám sát với:"
-log "  mysql -h $REPLICA_HOST -P $REPLICA_PORT -u root -p$ROOT_PASSWORD -e 'SHOW REPLICA STATUS\\G'"
+log "  mysql -h $REPLICA_HOST -P $REPLICA_PORT -u root -p$ROOT_PASSWORD -e 'SHOW REPLICA STATUS\\\\G'"
