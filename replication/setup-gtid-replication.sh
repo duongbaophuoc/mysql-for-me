@@ -15,8 +15,8 @@ ROOT_PASSWORD="${ROOT_PASSWORD:-secret}"
 REPL_USER="${REPL_USER:-replicator}"
 REPL_PASSWORD="${REPL_PASSWORD:-repl_secret}"
 
-PRIMARY_CMD="mysql -h $PRIMARY_HOST -P $PRIMARY_PORT -u root -p$ROOT_PASSWORD"
-REPLICA_CMD="mysql -h $REPLICA_HOST -P $REPLICA_PORT -u root -p$ROOT_PASSWORD"
+PRIMARY_CMD="mysql -h \"$PRIMARY_HOST\" -P \"$PRIMARY_PORT\" -u root -p\"$ROOT_PASSWORD\""
+REPLICA_CMD="mysql -h \"$REPLICA_HOST\" -P \"$REPLICA_PORT\" -u root -p\"$ROOT_PASSWORD\""
 
 log()  { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*"; }
 err()  { echo "[$(date '+%Y-%m-%d %H:%M:%S')] ❌ ERROR: $*" >&2; exit 1; }
@@ -46,7 +46,7 @@ FLUSH PRIVILEGES;
 log "✅ Replication user created / User replication đã tạo: $REPL_USER"
 
 # Step 3: Get primary GTID information
-# Bước 3: Lấy thông tin GTID primary
+# Bước 3: Lấy th��ng tin GTID primary
 log "[3/6] Getting primary GTID / Lấy GTID primary..."
 $PRIMARY_CMD -e "SHOW MASTER STATUS\G"
 EXECUTED_GTIDS=$($PRIMARY_CMD -se "SELECT @@GLOBAL.gtid_executed")
