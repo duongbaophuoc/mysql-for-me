@@ -8,7 +8,10 @@ set -e
 
 TARGET_TIME="${1:-$(date '+%Y-%m-%d %H:%M:%S')}"
 BACKUP_FILE="/tmp/shop_db_backup.sql"
-MYSQL_CMD="mysql -h 127.0.0.1 -P 3306 -u root -psecret"
+MYSQL_HOST="127.0.0.1"
+MYSQL_PORT="3306"
+MYSQL_USER="root"
+MYSQL_PASSWORD="secret"
 BINLOG_PATH="/var/lib/mysql"
 
 echo "============================================================"
@@ -19,7 +22,7 @@ echo "============================================================"
 # Step 1: Restore base backup / Bước 1: Khôi phục backup cơ sở
 echo ""
 echo "[Step 1] Restoring base backup / Khôi phục backup cơ sở..."
-$MYSQL_CMD shop_db < "$BACKUP_FILE"
+mysql -h "$MYSQL_HOST" -P "$MYSQL_PORT" -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" shop_db < "$BACKUP_FILE"
 echo "✅ Base backup restored / Backup cơ sở đã khôi phục"
 
 # Step 2: Find binlog position from backup / Bước 2: Tìm vị trí binlog từ backup
@@ -43,14 +46,14 @@ docker exec mysql-primary mysqlbinlog \
     --start-position="$START_POS" \
     --stop-datetime="$TARGET_TIME" \
     $BINLOG_FILES \
-    | $MYSQL_CMD shop_db
+    | mysql -h "$MYSQL_HOST" -P "$MYSQL_PORT" -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" shop_db
 
 echo "✅ Binlogs applied / Đã áp dụng binlog"
 
 # Step 4: Verify / Bước 4: Xác minh
 echo ""
 echo "[Step 4] Verification / Xác minh..."
-$MYSQL_CMD -e "
+mysql -h "$MYSQL_HOST" -P "$MYSQL_PORT" -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" -e "
 USE shop_db;
 SELECT 'orders' AS tbl, COUNT(*) AS rows FROM orders
 UNION ALL
