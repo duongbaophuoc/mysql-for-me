@@ -15,18 +15,18 @@ DURATION="${DURATION:-60}"         # Seconds / Giây
 TABLE_SIZE="${TABLE_SIZE:-100000}"
 TABLES="${TABLES:-4}"
 
-SYSBENCH_COMMON="
-    --mysql-host=$MYSQL_HOST
-    --mysql-port=$MYSQL_PORT
-    --mysql-user=$MYSQL_USER
-    --mysql-password=$MYSQL_PASSWORD
-    --mysql-db=$MYSQL_DB
-    --tables=$TABLES
-    --table-size=$TABLE_SIZE
-    --threads=$THREADS
-    --time=$DURATION
-    --report-interval=10
-"
+SYSBENCH_COMMON=(
+    "--mysql-host=$MYSQL_HOST"
+    "--mysql-port=$MYSQL_PORT"
+    "--mysql-user=$MYSQL_USER"
+    "--mysql-password=$MYSQL_PASSWORD"
+    "--mysql-db=$MYSQL_DB"
+    "--tables=$TABLES"
+    "--table-size=$TABLE_SIZE"
+    "--threads=$THREADS"
+    "--time=$DURATION"
+    "--report-interval=10"
+)
 
 log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*"; }
 
@@ -41,21 +41,21 @@ fi
 
 # Step 1: Prepare test data / Bước 1: Chuẩn bị dữ liệu test
 log "Preparing test tables / Chuẩn bị bảng test..."
-sysbench /usr/share/sysbench/oltp_read_write.lua $SYSBENCH_COMMON prepare
+sysbench /usr/share/sysbench/oltp_read_write.lua "${SYSBENCH_COMMON[@]}" prepare
 log "✅ Tables prepared / Bảng đã chuẩn bị xong"
 
 # Step 2: Run read/write benchmark / Bước 2: Chạy đánh giá đọc/ghi
 log ""
 log "=== Running OLTP Read/Write Benchmark / Chạy Đánh Giá Đọc/Ghi OLTP ==="
-sysbench /usr/share/sysbench/oltp_read_write.lua $SYSBENCH_COMMON run | tee /tmp/bench_rw.txt
+sysbench /usr/share/sysbench/oltp_read_write.lua "${SYSBENCH_COMMON[@]}" run | tee /tmp/bench_rw.txt
 
 log ""
 log "=== Running Read-Only Benchmark / Chạy Đánh Giá Chỉ Đọc ==="
-sysbench /usr/share/sysbench/oltp_read_only.lua $SYSBENCH_COMMON run | tee /tmp/bench_ro.txt
+sysbench /usr/share/sysbench/oltp_read_only.lua "${SYSBENCH_COMMON[@]}" run | tee /tmp/bench_ro.txt
 
 log ""
 log "=== Running Write-Only Benchmark / Chạy Đánh Giá Chỉ Ghi ==="
-sysbench /usr/share/sysbench/oltp_write_only.lua $SYSBENCH_COMMON run | tee /tmp/bench_wo.txt
+sysbench /usr/share/sysbench/oltp_write_only.lua "${SYSBENCH_COMMON[@]}" run| tee /tmp/bench_wo.txt
 
 # Step 3: Extract key metrics / Bước 3: Trích xuất số liệu chính
 log ""
@@ -71,6 +71,6 @@ done
 # Step 4: Cleanup / Bước 4: Dọn dẹp
 log ""
 log "Cleaning up test tables / Dọn bảng test..."
-sysbench /usr/share/sysbench/oltp_read_write.lua $SYSBENCH_COMMON cleanup
+sysbench /usr/share/sysbench/oltp_read_write.lua "${SYSBENCH_COMMON[@]}" cleanup
 
 log "=== Benchmark complete / Đánh giá hoàn tất ==="
