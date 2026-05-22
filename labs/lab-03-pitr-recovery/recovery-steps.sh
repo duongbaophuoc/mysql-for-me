@@ -40,7 +40,9 @@ echo "[Step 3] Applying binary logs to: $TARGET_TIME"
 echo "[Step 3] Áp dụng binary log đến: $TARGET_TIME"
 
 # Get all binlog files from container / Lấy tất cả file binlog từ container
-BINLOG_FILES=$(docker exec mysql-primary ls "$BINLOG_PATH"/mysql-bin.[0-9]* 2>/dev/null | tr '\n' ' ')
+readarray -t BINLOG_FILES < <(
+    docker exec mysql-primary ls "$BINLOG_PATH"/mysql-bin.[0-9]* 2>/dev/null
+)
 
 docker exec mysql-primary mysqlbinlog \
     --start-position="$START_POS" \
