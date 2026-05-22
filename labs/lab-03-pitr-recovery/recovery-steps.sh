@@ -45,7 +45,7 @@ BINLOG_FILES=$(docker exec mysql-primary ls "$BINLOG_PATH"/mysql-bin.[0-9]* 2>/d
 docker exec mysql-primary mysqlbinlog \
     --start-position="$START_POS" \
     --stop-datetime="$TARGET_TIME" \
-    $BINLOG_FILES \
+    "${BINLOG_FILES[@]}" \
     | mysql -h "$MYSQL_HOST" -P "$MYSQL_PORT" -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" shop_db
 
 echo "✅ Binlogs applied / Đã áp dụng binlog"
