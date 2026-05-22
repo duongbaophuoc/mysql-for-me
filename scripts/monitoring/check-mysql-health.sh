@@ -15,7 +15,7 @@ MYSQL_USER="${MYSQL_USER:-root}"
 MYSQL_PASSWORD="${MYSQL_PASSWORD:-secret}"
 ALERT_THRESHOLD_CONNECTIONS=80    # % of max_connections
 ALERT_THRESHOLD_LAG=30            # seconds
-ALERT_THRESHOLD_SLOW_QPS=5        # slow queries per second
+#ALERT_THRESHOLD_SLOW_QPS=5        # slow queries per second
 
 TS="$(date '+%Y-%m-%d %H:%M:%S')"
 STATUS="OK"
